@@ -15,12 +15,12 @@ const MotorbikeSchema = new mongoose.Schema(
       required: true,
     },
     battery: {
-      type: Number, // dung lượng pin (Ah hoặc kWh)
+      type: Number,
     },
   },
   { timestamps: true }
 );
 
-// tránh lỗi overwrite model khi Vercel hot reload
+// collection = motorbikes
 export default mongoose.models.Motorbike ||
-  mongoose.model("Motorbike", MotorbikeSchema);
+  mongoose.model("Motorbike", MotorbikeSchema, "motorbikes");

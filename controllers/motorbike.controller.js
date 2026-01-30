@@ -1,7 +1,6 @@
-import Motorbike from "../models/Motorbike.js";
-import { connectDB } from "../lib/db.js";
+import Motorbike from "../models/motorbike.js";
+import { connectDB } from "../libs/db.js";
 
-// GET /api/motorbikes
 export async function getAllMotorbikes(req, res) {
   try {
     await connectDB();
@@ -12,7 +11,6 @@ export async function getAllMotorbikes(req, res) {
   }
 }
 
-// POST /api/motorbikes
 export async function createMotorbike(req, res) {
   try {
     await connectDB();

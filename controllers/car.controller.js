@@ -7,21 +7,29 @@ export async function getAllCars(req, res) {
   try {
     await connectDB();
 
-    const { status, category, minPrice, maxPrice } = req.query;
+    // 1. Thêm 'rating' vào danh sách lấy từ query
+    const { status, category, minPrice, maxPrice, rating } = req.query;
     const filter = {};
 
     if (status !== undefined) filter.status = Number(status);
     if (category) filter.category = category;
 
+    // Lọc theo giá
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
 
+    // 2. --- BỔ SUNG LOGIC LỌC RATING ---
+    // Nếu client gửi rating (ví dụ 4), lấy các xe có rating >= 4
+    if (rating) {
+      filter.rating = { $gte: Number(rating) };
+    }
+
     const cars = await Car.find(filter)
       .populate("category", "name slug type")
-      .sort({ rating: -1, createdAt: -1 });
+      .sort({ rating: -1, createdAt: -1 }); // Vẫn giữ sắp xếp điểm cao lên đầu
 
     res.json({
       success: true,

@@ -10,16 +10,42 @@ export async function getAllMotorbikes(req, res) {
   try {
     await connectDB();
 
-    const { status, category, minPrice, maxPrice } = req.query;
+    const {
+      status,
+      category,
+      minPrice,
+      maxPrice,
+      rating,
+      keyword,
+    } = req.query;
 
     const filter = {};
 
-    if (status !== undefined) filter.status = Number(status);
-    if (category) filter.category = category;
+    // tình trạng
+    if (status !== undefined) {
+      filter.status = Number(status);
+    }
+
+    // category
+    if (category) {
+      filter.category = category;
+    }
+
+    // giá
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
       if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
+
+    // rating
+    if (rating) {
+      filter.rating = { $gte: Number(rating) };
+    }
+
+    // tìm kiếm tên
+    if (keyword) {
+      filter.name = { $regex: keyword, $options: "i" };
     }
 
     const data = await Motorbike
@@ -33,7 +59,10 @@ export async function getAllMotorbikes(req, res) {
       data,
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 }
 

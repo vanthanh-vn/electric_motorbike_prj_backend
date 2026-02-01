@@ -5,7 +5,15 @@ export async function getAllCategories(req, res) {
   try {
     await connectDB();
 
-    const categories = await Category.find({ status: 1 }).sort({ createdAt: -1 });
+    const { type } = req.query;
+    
+    const filter = {}; 
+
+    if (type) {
+      filter.type = type;
+    }
+
+    const categories = await Category.find(filter).sort({ createdAt: -1 });
 
     res.json({
       success: true,
@@ -13,10 +21,7 @@ export async function getAllCategories(req, res) {
       data: categories,
     });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(500).json({ success: false, message: err.message });
   }
 }
 

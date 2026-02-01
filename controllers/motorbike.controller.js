@@ -1,58 +1,63 @@
 import Motorbike from "../models/motorbike.js";
 import Category from "../models/category.js";
-import  { connectDB }  from "../libs/db.js";
+import { connectDB } from "../libs/db.js";
 
 /**
  * GET /api/motobikes
- * Lấy danh sách xe
- * Có thể filter theo status và sort theo rating
  */
 export async function getAllMotorbikes(req, res) {
   try {
     await connectDB();
 
-    const {
-      status,
-      category,
-      minPrice,
-      maxPrice,
-      rating,
-      keyword,
-    } = req.query;
+    const { status, category, minPrice, maxPrice, rating, keyword } = req.query;
 
     const filter = {};
 
-    // tình trạng
+    // 1. Status
     if (status !== undefined) {
       filter.status = Number(status);
     }
 
-    // category
+    // 2. Category
     if (category) {
       filter.category = category;
     }
 
-    // giá
-    if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = Number(minPrice);
-      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    // 3. Keyword - Tìm kiếm tương đối (chứa từ khoá)
+    if (keyword && keyword.trim() !== "") {
+      filter.name = { $regex: keyword.trim(), $options: "i" };
     }
 
-    // rating
-    if (rating) {
+    // 4. Price
+    if (minPrice || maxPrice) {
+      const priceQuery = {};
+      let hasPriceFilter = false;
+
+      if (minPrice && !isNaN(Number(minPrice))) {
+        priceQuery.$gte = Number(minPrice);
+        hasPriceFilter = true;
+      }
+
+      if (maxPrice && !isNaN(Number(maxPrice))) {
+        priceQuery.$lte = Number(maxPrice);
+        hasPriceFilter = true;
+      }
+
+      if (hasPriceFilter) {
+        filter.price = priceQuery;
+      }
+    }
+
+    // 5. Rating
+    if (rating && !isNaN(Number(rating))) {
       filter.rating = { $gte: Number(rating) };
     }
 
-    // tìm kiếm tên
-    if (keyword) {
-      filter.name = { $regex: keyword, $options: "i" };
-    }
+    console.log("🔍 Motorbike Filter Query:", JSON.stringify(filter, null, 2));
 
-    const data = await Motorbike
-      .find(filter)
+    const data = await Motorbike.find(filter)
       .populate("category", "name slug type")
-      .sort({ rating: -1, createdAt: -1 });
+      .sort({ createdAt: -1 });
 
     res.json({
       success: true,
@@ -60,26 +65,21 @@ export async function getAllMotorbikes(req, res) {
       data,
     });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    console.error("Lỗi API Motorbike:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 }
 
-
-
 /**
  * GET /api/motobikes/:id
- * Lấy chi tiết 1 xe
  */
 export async function getMotorbikeById(req, res) {
   try {
     await connectDB();
 
     const motorbike = await Motorbike
-  .findById(req.params.id)
-  .populate("category", "name slug type");
+      .findById(req.params.id)
+      .populate("category", "name slug type");
 
     if (!motorbike) {
       return res.status(404).json({
@@ -102,7 +102,6 @@ export async function getMotorbikeById(req, res) {
 
 /**
  * POST /api/motobikes
- * Tạo xe mới
  */
 export async function createMotorbike(req, res) {
   try {
@@ -110,8 +109,7 @@ export async function createMotorbike(req, res) {
 
     const { category } = req.body;
 
-    // --- BẮT ĐẦU ĐOẠN KIỂM TRA LOGIC ---
-    // Tìm xem category có tồn tại VÀ có type là "motorbike" hay không
+    // --- KIỂM TRA CATEGORY HỢP LỆ ---
     if (category) {
       const validCategory = await Category.findOne({
         _id: category,
@@ -125,7 +123,6 @@ export async function createMotorbike(req, res) {
         });
       }
     }
-    // --- KẾT THÚC ĐOẠN KIỂM TRA LOGIC ---
 
     const motorbike = await Motorbike.create(req.body);
 
@@ -143,7 +140,6 @@ export async function createMotorbike(req, res) {
 
 /**
  * PUT /api/motobikes/:id
- * Cập nhật xe
  */
 export async function updateMotorbike(req, res) {
   try {
@@ -176,7 +172,6 @@ export async function updateMotorbike(req, res) {
 
 /**
  * DELETE /api/motobikes/:id
- * Xóa xe
  */
 export async function deleteMotorbike(req, res) {
   try {

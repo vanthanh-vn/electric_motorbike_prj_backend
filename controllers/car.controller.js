@@ -7,29 +7,61 @@ export async function getAllCars(req, res) {
   try {
     await connectDB();
 
-    // 1. Thêm 'rating' vào danh sách lấy từ query
-    const { status, category, minPrice, maxPrice, rating } = req.query;
+    const { status, category, minPrice, maxPrice, rating, keyword } = req.query;
+    
+    // Khởi tạo bộ lọc
     const filter = {};
 
-    if (status !== undefined) filter.status = Number(status);
-    if (category) filter.category = category;
-
-    // Lọc theo giá
-    if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = Number(minPrice);
-      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    // 1. Lọc theo trạng thái (nếu có)
+    if (status !== undefined) {
+      filter.status = Number(status);
     }
 
-    // 2. --- BỔ SUNG LOGIC LỌC RATING ---
-    // Nếu client gửi rating (ví dụ 4), lấy các xe có rating >= 4
-    if (rating) {
+    // 2. Lọc theo danh mục
+    if (category) {
+      filter.category = category;
+    }
+
+    // 3. Lọc theo Tên (Keyword) - LOGIC TÌM KIẾM CHỨA TỪ KHÓA
+    if (keyword && keyword.trim() !== "") {
+      // $regex: Tìm chuỗi con (gõ 'ho' ra 'honda')
+      // $options: 'i' (không phân biệt hoa thường)
+      filter.name = { $regex: keyword.trim(), $options: "i" };
+    }
+
+    // 4. Lọc theo Giá (Price)
+    if (minPrice || maxPrice) {
+      const priceQuery = {};
+      let hasPriceFilter = false;
+
+      // Chỉ thêm điều kiện nếu minPrice là số hợp lệ
+      if (minPrice && !isNaN(Number(minPrice))) {
+        priceQuery.$gte = Number(minPrice);
+        hasPriceFilter = true;
+      }
+
+      // Chỉ thêm điều kiện nếu maxPrice là số hợp lệ
+      if (maxPrice && !isNaN(Number(maxPrice))) {
+        priceQuery.$lte = Number(maxPrice);
+        hasPriceFilter = true;
+      }
+
+      // Chỉ gán vào filter chính nếu có ít nhất 1 điều kiện
+      if (hasPriceFilter) {
+        filter.price = priceQuery;
+      }
+    }
+
+    // 5. Lọc theo Rating
+    if (rating && !isNaN(Number(rating))) {
       filter.rating = { $gte: Number(rating) };
     }
 
+    console.log("🔍 Car Filter Query:", JSON.stringify(filter, null, 2));
+
     const cars = await Car.find(filter)
       .populate("category", "name slug type")
-      .sort({ rating: -1, createdAt: -1 }); // Vẫn giữ sắp xếp điểm cao lên đầu
+      .sort({ createdAt: -1 }); // Mới nhất lên đầu
 
     res.json({
       success: true,
@@ -37,6 +69,7 @@ export async function getAllCars(req, res) {
       data: cars,
     });
   } catch (err) {
+    console.error("Lỗi API Car:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 }
@@ -71,8 +104,7 @@ export async function createCar(req, res) {
 
     const { category } = req.body;
 
-    // --- BẮT ĐẦU ĐOẠN KIỂM TRA LOGIC ---
-    // Tìm xem category có tồn tại VÀ có type là "car" hay không
+    // --- KIỂM TRA CATEGORY HỢP LỆ ---
     if (category) {
       const validCategory = await Category.findOne({
         _id: category,
@@ -86,7 +118,6 @@ export async function createCar(req, res) {
         });
       }
     }
-    // --- KẾT THÚC ĐOẠN KIỂM TRA LOGIC ---
 
     const car = await Car.create(req.body);
 

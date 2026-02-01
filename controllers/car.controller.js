@@ -1,4 +1,5 @@
 import Car from "../models/car.js";
+import Category from "../models/category.js";
 import { connectDB } from "../libs/db.js";
 
 // GET /api/cars
@@ -59,6 +60,25 @@ export async function getCarById(req, res) {
 export async function createCar(req, res) {
   try {
     await connectDB();
+
+    const { category } = req.body;
+
+    // --- BẮT ĐẦU ĐOẠN KIỂM TRA LOGIC ---
+    // Tìm xem category có tồn tại VÀ có type là "car" hay không
+    if (category) {
+      const validCategory = await Category.findOne({
+        _id: category,
+        type: "car", // Bắt buộc phải là car
+      });
+
+      if (!validCategory) {
+        return res.status(400).json({
+          success: false,
+          message: "Danh mục không hợp lệ! Vui lòng chọn danh mục dành cho Ô tô.",
+        });
+      }
+    }
+    // --- KẾT THÚC ĐOẠN KIỂM TRA LOGIC ---
 
     const car = await Car.create(req.body);
 

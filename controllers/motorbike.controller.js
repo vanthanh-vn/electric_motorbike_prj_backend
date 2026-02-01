@@ -1,4 +1,5 @@
 import Motorbike from "../models/motorbike.js";
+import Category from "../models/category.js";
 import  { connectDB }  from "../libs/db.js";
 
 /**
@@ -106,6 +107,25 @@ export async function getMotorbikeById(req, res) {
 export async function createMotorbike(req, res) {
   try {
     await connectDB();
+
+    const { category } = req.body;
+
+    // --- BẮT ĐẦU ĐOẠN KIỂM TRA LOGIC ---
+    // Tìm xem category có tồn tại VÀ có type là "motorbike" hay không
+    if (category) {
+      const validCategory = await Category.findOne({
+        _id: category,
+        type: "motorbike", // Bắt buộc phải là motorbike
+      });
+
+      if (!validCategory) {
+        return res.status(400).json({
+          success: false,
+          message: "Danh mục không hợp lệ! Vui lòng chọn danh mục dành cho Xe máy.",
+        });
+      }
+    }
+    // --- KẾT THÚC ĐOẠN KIỂM TRA LOGIC ---
 
     const motorbike = await Motorbike.create(req.body);
 

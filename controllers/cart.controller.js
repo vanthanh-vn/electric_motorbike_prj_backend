@@ -1,5 +1,13 @@
 import Cart from "../models/cart.js";
-
+export const getCart = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const cart = await Cart.findOne({ userId });
+        res.status(200).json({ success: true, data: cart });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Lỗi server" });
+    }
+};
 export const addToCart = async (req, res) => {
     try {
         // Lấy dữ liệu FE gửi lên

@@ -9,10 +9,13 @@ export const getCart = async (req, res) => {
     }
 };
 export const addToCart = async (req, res) => {
+    console.log("Dữ liệu nhân đc t")
     try {
         // Lấy dữ liệu FE gửi lên
         const { userId, productId, productType, name, price, image, quantity = 1 } = req.body;
-
+        if(!productId){
+      return res.status(400).json({ success: false, message: "Thiếu productId rồi bạn ơi!" });
+        }
         // 1. Tìm giỏ hàng của user
         let cart = await Cart.findOne({ userId });
 

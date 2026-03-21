@@ -17,12 +17,19 @@ export const createOrder = async (req, res) => {
             discount,
             finalPrice,
         });
-
         await newOrder.save();
+        // 3. Lấy ra danh sách các ID của những sản phẩm vừa mua
+        const purchasedProductIds = cartItems.map(item => item.productId);
 
-        // 3. (Quan trọng) Sau khi thanh toán xong, hãy xóa sạch giỏ hàng của User này
-        await Cart.findOneAndDelete({ userId });
-
+        // Cập nhật giỏ hàng: Tìm giỏ của userId, dùng lệnh $pull để xóa các item có productId vừa mua
+        await Cart.findOneAndUpdate(
+            { userId: userId },
+            { 
+                $pull: { 
+                    items: { productId: { $in: purchasedProductIds } } 
+                } 
+            }
+        );
         res.status(201).json({ success: true, orderId: orderId });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

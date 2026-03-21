@@ -1,12 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  throw new Error('Vui lòng định nghĩa biến MONGODB_URI trong file .env hoặc Vercel Settings');
-}
-
-/** * Sử dụng biến global để duy trì kết nối qua các lần gọi API trên Vercel
+/** * Sử dụng biến global để duy trì kết nối qua các lần gọi API (đặc biệt hữu ích trên Vercel)
  */
 let cached = global.mongoose;
 
@@ -15,18 +9,31 @@ if (!cached) {
 }
 
 async function connectDB() {
+  // 1. Đưa việc lấy biến vào trong hàm để đảm bảo dotenv đã load xong
+  const MONGODB_URI = process.env.MONGODB_URI;
+
+  if (!MONGODB_URI) {
+    throw new Error('LỖI: Vui lòng định nghĩa biến MONGODB_URI trong file .env');
+  }
+
   if (cached.conn) {
     return cached.conn;
   }
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: false, // Tắt buffering để tránh lỗi timeout khi chưa kết nối xong
+      bufferCommands: false, 
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    console.log("⏳ Đang kết nối đến MongoDB...");
+    
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
       console.log("✅ Kết nối MongoDB thành công");
-      return mongoose;
+      return mongooseInstance;
+    }).catch((err) => {
+      console.error("❌ Lỗi kết nối MongoDB:", err.message);
+      cached.promise = null; // Reset promise để có thể thử lại lần sau
+      throw err;
     });
   }
   

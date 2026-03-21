@@ -28,3 +28,16 @@ export const createOrder = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+// Thêm hàm lấy danh sách đơn hàng của User
+export const getOrdersByUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Tìm tất cả đơn hàng của userId này, sắp xếp theo thời gian mới nhất lên đầu (-1)
+        const orders = await Order.find({ userId }).sort({ createdAt: -1 });
+        
+        res.status(200).json({ success: true, data: orders });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

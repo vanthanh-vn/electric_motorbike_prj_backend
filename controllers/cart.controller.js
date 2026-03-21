@@ -1,6 +1,9 @@
+import { connect } from "mongoose";
 import Cart from "../models/cart.js";
+import connectDB from "../libs/db.js";
 export const getCart = async (req, res) => {
     try {
+        await connectDB(); // Đảm bảo đã kết nối đến DB trước khi thực hiện truy vấn
         const { userId } = req.params;
         const cart = await Cart.findOne({ userId });
         res.status(200).json({ success: true, data: cart });

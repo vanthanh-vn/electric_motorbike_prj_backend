@@ -1,32 +1,37 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-// Khai báo global để giữ kết nối an toàn tuyệt đối trên Vercel
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  throw new Error('Vui lòng định nghĩa biến MONGODB_URI trong file .env hoặc Vercel Settings');
+}
+
+/** * Sử dụng biến global để duy trì kết nối qua các lần gọi API trên Vercel
+ */
 let cached = global.mongoose;
 
 if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
 }
 
-export async function connectDB() {
-  // Nếu đã kết nối thì dùng luôn
+async function connectDB() {
   if (cached.conn) {
-    console.log("⚡ Đã dùng lại kết nối MongoDB có sẵn!");
     return cached.conn;
   }
 
-  // Nếu chưa có kết nối hoặc đang trong quá trình kết nối
   if (!cached.promise) {
-    const uri = process.env.MONGODB_URI; // Đúng tên biến của bạn nhé
-    if (!uri) throw new Error("Missing MONGODB_URI");
+    const opts = {
+      bufferCommands: false, // Tắt buffering để tránh lỗi timeout khi chưa kết nối xong
+    };
 
-    console.log("⏳ Đang tạo kết nối mới tới MongoDB...");
-    cached.promise = mongoose.connect(uri, { bufferCommands: false }).then((mongoose) => {
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log("✅ Kết nối MongoDB thành công");
       return mongoose;
     });
   }
   
-  // Chờ cho đến khi kết nối hoàn tất
   cached.conn = await cached.promise;
-  console.log("✅ MongoDB connected an toàn trên Vercel!");
   return cached.conn;
 }
+
+export default connectDB;

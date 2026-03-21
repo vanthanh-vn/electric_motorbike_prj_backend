@@ -1,6 +1,6 @@
 import Motorbike from "../models/motorbike.js";
 import Category from "../models/category.js";
-import { connectDB } from "../libs/db.js";
+import  connectDB  from "../libs/db.js";
 
 /**
  * GET /api/motobikes

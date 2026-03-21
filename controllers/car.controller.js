@@ -1,6 +1,6 @@
 import Car from "../models/car.js";
 import Category from "../models/category.js";
-import { connectDB } from "../libs/db.js";
+import  connectDB  from "../libs/db.js";
 
 // GET /api/cars
 export async function getAllCars(req, res) {

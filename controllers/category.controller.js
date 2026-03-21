@@ -1,5 +1,5 @@
 import Category from "../models/category.js";
-import { connectDB } from "../libs/db.js";
+import  connectDB  from "../libs/db.js";
 
 export async function getAllCategories(req, res) {
   try {

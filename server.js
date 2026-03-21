@@ -6,7 +6,7 @@ import categoryRoutes from "./routes/category.route.js";
 import carRouter from "./routes/car.route.js";
 import cartRouter from "./routes/cart.route.js";
 import orderRouter from "./routes/order.route.js";
-import connectDB from "./config/db.js";
+import connectDB from "./libs/db.js";
 dotenv.config();
 
 const app = express();

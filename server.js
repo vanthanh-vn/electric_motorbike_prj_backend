@@ -5,6 +5,7 @@ import motorbikeRoutes from "./routes/motorbike.route.js";
 import categoryRoutes from "./routes/category.route.js";
 import carRouter from "./routes/car.route.js";
 import cartRouter from "./routes/cart.route.js";
+import orderRouter from "./routes/order.route.js";
 dotenv.config();
 
 const app = express();
@@ -15,6 +16,8 @@ app.use(express.json());
 app.use("/api/motorbikes", motorbikeRoutes);
 
 app.use("/api/categories", categoryRoutes);
+
+app.use("/api/orders", orderRouter);
 
 app.use("/api/car",carRouter);
 

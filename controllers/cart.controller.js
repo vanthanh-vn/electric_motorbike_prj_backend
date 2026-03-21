@@ -5,7 +5,9 @@ export const getCart = async (req, res) => {
         const cart = await Cart.findOne({ userId });
         res.status(200).json({ success: true, data: cart });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Lỗi server" });
+        console.error("Lỗi tại getCart:", error); 
+        // TRẢ THẲNG MÃ LỖI VỀ ĐIỆN THOẠI
+        res.status(500).json({ success: false, message: error.message }); 
     }
 };
 export const addToCart = async (req, res) => {
